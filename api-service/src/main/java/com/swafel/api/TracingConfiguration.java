@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 
+import java.util.Collections;
+import java.util.List;
+
 import brave.opentracing.BraveTracer;
 
 import feign.Logger;
@@ -93,6 +96,11 @@ public class TracingConfiguration {
 						return null;
 					}
 				};
+			}
+
+			@Override
+			public List<CatalogItem> listItems() {
+				return Collections.emptyList();
 			}
 		};
 

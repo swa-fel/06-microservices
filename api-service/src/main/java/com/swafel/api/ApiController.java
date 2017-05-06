@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -29,6 +30,11 @@ public class ApiController {
 		else {
 			return ResponseEntity.status(503).build();
 		}
+	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "/catalog", produces = "application/json")
+	public List<CatalogItem> inventoryList() {
+		return catalogService.listItems();
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/inventory/{id}", produces = "application/json")
