@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.util.List;
+
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -22,6 +24,22 @@ public class CatalogController {
 
 	@Autowired
 	Tracer tracer;
+
+	@RequestMapping(method = RequestMethod.GET, value="", produces = "application/json")
+	public List<CatalogItem> listItems(HttpServletRequest request) {
+		SpanContext serverSpanContext = TracingHandlerInterceptor.serverSpanContext(request);
+
+		Span span = tracer.buildSpan("listItems")
+				.asChildOf(serverSpanContext)
+				.start();
+
+		List<CatalogItem> ret = catalogService.listItems();
+
+		span.finish();
+
+		return ret;
+	}
+
 
 	@RequestMapping(method = RequestMethod.GET, value="/{id}", produces = "application/json")
 	public CatalogItem getCatalogItem(@PathVariable long id, HttpServletRequest request) {

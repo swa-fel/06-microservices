@@ -1,9 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Inventory Service</title>
+    <meta charset="UTF-8"/>
+    <title>Swafel Store</title>
 </head>
 <body>
-<a href="/inventory/1">Item 1</a>
+<script src="jquery.js"></script>
+<script>
+
+    var basket = [];
+
+    catalogListCallback = function (list) {
+        $("#list").html("");
+
+        list.forEach(function (catalogEntry) {
+
+            var item = $("<li><a href=\"#\">"  + catalogEntry.name + "</a>" + " " + catalogEntry.price + "</li>");
+            item.on("click", function (i) {
+                $("#header").html(catalogEntry.name + " " + catalogEntry.price);
+                $("#list").html("");
+                $.get("/item/" + catalogEntry.id, function (shopItem) {
+                    $("#list").html(shopItem.availability);
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                    $("#list").html(jqXHR.responseText);
+                });
+            });
+
+            item.appendTo($("#list"));
+        });
+    }
+
+    home = function (x) {
+        $("#header").html("Items");
+        $.get("/catalog", catalogListCallback);
+    }
+
+    $(document).ready(function() {
+        home(null);
+        $("#home").on("click", home);
+    });
+</script>
+
+<a id="home">Home</a>
+
+<h1 id="header">Items</h1>
+
+<ul id="list"></ul>
+
 </body>
 </html>

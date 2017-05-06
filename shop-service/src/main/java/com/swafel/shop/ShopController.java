@@ -7,11 +7,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @RestController
-@RequestMapping("/shop")
+@RequestMapping("/")
 public class ShopController {
 
 	@Autowired
@@ -31,6 +32,11 @@ public class ShopController {
 		}
 
 		return "inventory information not available at this time";
+	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "/catalog", produces = "application/json")
+	public List<CatalogItem> inventoryList() {
+		return catalogService.listItems();
 	}
 
 

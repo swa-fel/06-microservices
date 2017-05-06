@@ -30,6 +30,4 @@ public class InventoryItem {
 	public void setCount(long count) {
 		this.count = count;
 	}
-
-	static final InventoryItem NONE = new InventoryItem();
 }

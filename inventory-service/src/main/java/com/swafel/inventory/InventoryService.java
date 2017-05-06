@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import io.opentracing.Tracer;
@@ -22,6 +24,10 @@ public class InventoryService {
 		items.put(2l, new InventoryItem(2, "Bar", 1));
 		items.put(3l, new InventoryItem(3, "Tzar", 3));
 		items.put(4l, new InventoryItem(4, "Gar", 0));
+	}
+
+	public List<InventoryItem> listItems() {
+		return new LinkedList<>(items.values());
 	}
 
 	public InventoryItem findById(long id) {

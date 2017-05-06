@@ -12,5 +12,4 @@ public class ApiServiceApplicationTests {
 	@Test
 	public void contextLoads() {
 	}
-
 }
