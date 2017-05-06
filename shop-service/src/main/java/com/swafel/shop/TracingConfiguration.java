@@ -4,8 +4,10 @@ package com.swafel.shop;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
@@ -15,6 +17,7 @@ import java.util.List;
 
 import brave.opentracing.BraveTracer;
 
+import feign.Client;
 import feign.Logger;
 import feign.httpclient.ApacheHttpClient;
 import feign.hystrix.FallbackFactory;
@@ -32,6 +35,12 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
 @Configuration
 public class TracingConfiguration {
 
+	@Value("${catalog.service.url}")
+	private String catalogServiceUrl;
+
+	@Value("${inventory.service.url}")
+	private String inventoryServiceUrl;
+
     @Bean
     public Tracer tracer() {
         String zipkinServerUrl = System.getenv("ZIPKIN_SERVER_URL");
@@ -46,20 +55,17 @@ public class TracingConfiguration {
         return BraveTracer.wrap(braveTracer);
     }
 
+	@Bean
+	@Scope("prototype")
+	public Client httpClient() {
+		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+		return new ApacheHttpClient(HttpClientBuilder.create().setConnectionManager(cm).build());
+	}
 
     @Bean
-	public InventoryService inventoryService(Tracer tracer) {
+	public InventoryService inventoryService(Tracer tracer, Client httpClient) {
 		// bind current span to Hystrix thread
 		TracingConcurrencyStrategy.register();
-
-		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-		// Increase max total connection to 200
-		cm.setMaxTotal(200);
-		// Increase default max connection per route to 20
-		cm.setDefaultMaxPerRoute(20);
-		// Increase max connections for localhost:80 to 50
-		//HttpHost localhost = new HttpHost("127.0.0.1", 8081);
-		//cm.setMaxPerRoute(new HttpRoute(localhost), 200);
 
 		FallbackFactory<InventoryService> fallbackFactory = cause -> new InventoryService() {
 			@Override
@@ -75,26 +81,17 @@ public class TracingConfiguration {
 
 		return HystrixFeign.builder()
 				.client(new TracingClient(
-						new ApacheHttpClient(HttpClientBuilder.create().setConnectionManager(cm).build()),
+						httpClient,
 						tracer))
 				.logger(new Logger.ErrorLogger()).logLevel(Logger.Level.BASIC)
 				.decoder(new JacksonDecoder())
-				.target(InventoryService.class, "http://inventory:8080/", fallbackFactory);
+				.target(InventoryService.class, inventoryServiceUrl, fallbackFactory);
 	}
 
 	@Bean
-	public CatalogService catalogService(Tracer tracer) {
+	public CatalogService catalogService(Tracer tracer, Client httpClient) {
 		// bind current span to Hystrix thread
 		TracingConcurrencyStrategy.register();
-
-		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-		// Increase max total connection to 200
-		cm.setMaxTotal(200);
-		// Increase default max connection per route to 20
-		cm.setDefaultMaxPerRoute(20);
-		// Increase max connections for localhost:80 to 50
-		//HttpHost localhost = new HttpHost("127.0.0.1", 8081);
-		//cm.setMaxPerRoute(new HttpRoute(localhost), 200);
 
 		FallbackFactory<CatalogService> fallbackFactory = cause -> new CatalogService() {
 			@Override
@@ -115,11 +112,10 @@ public class TracingConfiguration {
 
 		return HystrixFeign.builder()
 				.client(new TracingClient(
-						new ApacheHttpClient(HttpClientBuilder.create().setConnectionManager(cm).build()),
+						httpClient,
 						tracer))
 				.logger(new Logger.ErrorLogger()).logLevel(Logger.Level.BASIC)
 				.decoder(new JacksonDecoder())
-				.target(CatalogService.class, "http://catalog:8080/",
-						fallbackFactory);
+				.target(CatalogService.class, catalogServiceUrl, fallbackFactory);
 	}
 }
