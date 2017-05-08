@@ -18,6 +18,16 @@ public class InventoryService {
 
 	private Map<Long, InventoryItem> items = new HashMap<>();
 
+	private int slow = 0;
+
+	public int getSlow() {
+		return slow;
+	}
+
+	public void setSlow(int slow) {
+		this.slow = slow;
+	}
+
 	public InventoryService() {
 
 		items.put(1l, new InventoryItem(1, "Foo", 42));
@@ -34,12 +44,14 @@ public class InventoryService {
 
 		InventoryItem ret = items.get(id);
 
-		/*
-		try {
-			Thread.sleep(10L);
-		} catch (InterruptedException e) {
-			// NOP
-		}*/
+		if (slow > 0) {
+
+			try {
+				Thread.sleep(slow);
+			} catch (InterruptedException e) {
+				// NOP
+			}
+		}
 
 		return ret;
 	}
