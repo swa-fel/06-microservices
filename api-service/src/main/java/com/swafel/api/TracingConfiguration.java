@@ -74,7 +74,7 @@ public class TracingConfiguration {
 						tracer))
 				.logger(new Logger.ErrorLogger()).logLevel(Logger.Level.BASIC)
 				.decoder(new JacksonDecoder())
-				.target(InventoryService.class, "http://inventory:8080/", fallbackFactory);
+				.target(InventoryService.class, "http://inventory", fallbackFactory);
 	}
 
 	@Bean
@@ -110,7 +110,7 @@ public class TracingConfiguration {
 						tracer))
 				.logger(new Logger.ErrorLogger()).logLevel(Logger.Level.BASIC)
 				.decoder(new JacksonDecoder())
-				.target(CatalogService.class, "http://catalog:8080/",
+				.target(CatalogService.class, "http://catalog",
 						fallbackFactory);
 	}
 }
