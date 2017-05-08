@@ -1,4 +1,4 @@
-package com.swafel.shop;
+package com.swafel.shop.model;
 
 public class InventoryItem {
 	private long id;

@@ -1,19 +1,13 @@
-package com.swafel.shop;
+package com.swafel.shop.model;
 
 import java.math.BigDecimal;
 
-public class CatalogItem {
+public class ShopItem {
 	private long id;
 	private String name;
 	private BigDecimal price;
 
-	public CatalogItem() {}
-
-	public CatalogItem(long id, String name, BigDecimal price) {
-		this.id = id;
-		this.name = name;
-		this.price = price;
-	}
+	private String availability;
 
 	public long getId() {
 		return id;
@@ -37,5 +31,13 @@ public class CatalogItem {
 
 	public void setPrice(BigDecimal price) {
 		this.price = price;
+	}
+
+	public String getAvailability() {
+		return availability;
+	}
+
+	public void setAvailability(String availability) {
+		this.availability = availability;
 	}
 }

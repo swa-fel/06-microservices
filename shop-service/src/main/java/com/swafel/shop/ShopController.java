@@ -7,9 +7,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.swafel.shop.model.CatalogItem;
+import com.swafel.shop.model.InventoryItem;
+import com.swafel.shop.model.ShopItem;
+
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
@@ -42,16 +45,12 @@ public class ShopController {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/item/{id}", produces = "application/json")
 	public ResponseEntity<ShopItem> getItem(@PathVariable long id) throws ExecutionException, InterruptedException {
-		Future<InventoryItem> futureInventoryItem = inventoryService.getItem(id).queue();
-		Future<CatalogItem> futureCatalogItem = catalogService.getItem(id).queue();
-
-		CatalogItem catalogItem = futureCatalogItem.get();
+		InventoryItem inventoryItem = inventoryService.getItem(id);
+		CatalogItem catalogItem = catalogService.getItem(id);
 
 		if (catalogItem == null) {
 			return ResponseEntity.status(503).build();
 		}
-
-		InventoryItem inventoryItem = futureInventoryItem.get();
 
 		ShopItem shopItem = new ShopItem();
 		shopItem.setId(id);
@@ -62,27 +61,4 @@ public class ShopController {
 
 		return ResponseEntity.ok(shopItem);
 	}
-
-/*
-	@RequestMapping(method = RequestMethod.GET, value = "/item/{id}", produces = "application/json")
-	public ResponseEntity<ShopItem> getItem(@PathVariable long id) throws ExecutionException, InterruptedException {
-		//Future<InventoryItem> futureInventoryItem = inventoryService.getItem(id).queue();
-		//Future<CatalogItem> futureCatalogItem = catalogService.getItem(id).queue();
-
-		InventoryItem inventoryItem =  inventoryService.getItem(id).execute();
-		CatalogItem catalogItem = catalogService.getItem(id).execute();
-
-		if (catalogItem == null ) {
-			return ResponseEntity.status(503).build();
-		}
-
-		ShopItem shopItem = new ShopItem();
-		shopItem.setId(id);
-		shopItem.setName(catalogItem.getName());
-		shopItem.setPrice(catalogItem.getPrice());
-
-		shopItem.setAvailability(getAvailability(inventoryItem));
-
-		return ResponseEntity.ok(shopItem);
-	}*/
 }

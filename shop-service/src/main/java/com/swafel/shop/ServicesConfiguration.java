@@ -9,11 +9,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.swafel.shop.model.InventoryItem;
 
-import java.util.Collections;
-import java.util.List;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import brave.opentracing.BraveTracer;
 
@@ -33,7 +32,7 @@ import zipkin.reporter.Reporter;
 import zipkin.reporter.urlconnection.URLConnectionSender;
 
 @Configuration
-public class TracingConfiguration {
+public class ServicesConfiguration {
 
 	@Value("${catalog.service.url}")
 	private String catalogServiceUrl;
@@ -51,7 +50,16 @@ public class TracingConfiguration {
         System.out.println("Using Zipkin tracer");
         Reporter<Span> reporter = AsyncReporter.builder(URLConnectionSender.create(zipkinServerUrl + "/api/v1/spans"))
                 .build();
-        brave.Tracer braveTracer = brave.Tracer.newBuilder().localServiceName("shop_service").reporter(reporter).build();
+
+        String hostname = "localhost";
+
+		try {
+			hostname = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			// ignore
+		}
+
+		brave.Tracer braveTracer = brave.Tracer.newBuilder().localServiceName(System.getProperty("user.name") + "@" + hostname).reporter(reporter).build();
         return BraveTracer.wrap(braveTracer);
     }
 
@@ -59,6 +67,8 @@ public class TracingConfiguration {
 	@Scope("prototype")
 	public Client httpClient() {
 		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+		cm.setDefaultMaxPerRoute(10);
+		cm.setMaxTotal(10);
 		return new ApacheHttpClient(HttpClientBuilder.create().setConnectionManager(cm).build());
 	}
 
@@ -67,12 +77,12 @@ public class TracingConfiguration {
 		// bind current span to Hystrix thread
 		TracingConcurrencyStrategy.register();
 
-		FallbackFactory<InventoryService> fallbackFactory = cause -> new InventoryService() {
+		FallbackFactory<InventoryService> fallbackFactory = new FallbackFactory<InventoryService>() {
 			@Override
-			public HystrixCommand<InventoryItem> getItem(long id) {
-				return new HystrixCommand<InventoryItem>(HystrixCommandGroupKey.Factory.asKey("inventoryFallback")) {
+			public InventoryService create(Throwable throwable) {
+				return new InventoryService() {
 					@Override
-					protected InventoryItem run() throws Exception {
+					public InventoryItem getItem(long id) {
 						return null;
 					}
 				};
@@ -93,29 +103,12 @@ public class TracingConfiguration {
 		// bind current span to Hystrix thread
 		TracingConcurrencyStrategy.register();
 
-		FallbackFactory<CatalogService> fallbackFactory = cause -> new CatalogService() {
-			@Override
-			public HystrixCommand<CatalogItem> getItem(long id) {
-				return new HystrixCommand<CatalogItem>(HystrixCommandGroupKey.Factory.asKey("catalogFallback")) {
-					@Override
-					protected CatalogItem run() throws Exception {
-						return null;
-					}
-				};
-			}
-
-			@Override
-			public List<CatalogItem> listItems() {
-				return Collections.emptyList();
-			}
-		};
-
 		return HystrixFeign.builder()
 				.client(new TracingClient(
 						httpClient,
 						tracer))
 				.logger(new Logger.ErrorLogger()).logLevel(Logger.Level.BASIC)
 				.decoder(new JacksonDecoder())
-				.target(CatalogService.class, catalogServiceUrl, fallbackFactory);
+				.target(CatalogService.class, catalogServiceUrl);
 	}
 }
