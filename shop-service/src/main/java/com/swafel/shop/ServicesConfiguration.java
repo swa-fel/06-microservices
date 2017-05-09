@@ -7,9 +7,6 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-
-import com.swafel.shop.model.InventoryItem;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -19,7 +16,6 @@ import brave.opentracing.BraveTracer;
 import feign.Client;
 import feign.Logger;
 import feign.httpclient.ApacheHttpClient;
-import feign.hystrix.FallbackFactory;
 import feign.hystrix.HystrixFeign;
 import feign.jackson.JacksonDecoder;
 import feign.opentracing.TracingClient;
@@ -64,11 +60,8 @@ public class ServicesConfiguration {
     }
 
 	@Bean
-	@Scope("prototype")
 	public Client httpClient() {
 		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-		cm.setDefaultMaxPerRoute(10);
-		cm.setMaxTotal(10);
 		return new ApacheHttpClient(HttpClientBuilder.create().setConnectionManager(cm).build());
 	}
 
@@ -77,25 +70,13 @@ public class ServicesConfiguration {
 		// bind current span to Hystrix thread
 		TracingConcurrencyStrategy.register();
 
-		FallbackFactory<InventoryService> fallbackFactory = new FallbackFactory<InventoryService>() {
-			@Override
-			public InventoryService create(Throwable throwable) {
-				return new InventoryService() {
-					@Override
-					public InventoryItem getItem(long id) {
-						return null;
-					}
-				};
-			}
-		};
-
 		return HystrixFeign.builder()
 				.client(new TracingClient(
 						httpClient,
 						tracer))
 				.logger(new Logger.ErrorLogger()).logLevel(Logger.Level.BASIC)
 				.decoder(new JacksonDecoder())
-				.target(InventoryService.class, inventoryServiceUrl, fallbackFactory);
+				.target(InventoryService.class, inventoryServiceUrl);
 	}
 
 	@Bean
