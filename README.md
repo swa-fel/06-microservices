@@ -46,4 +46,56 @@ cd Hystrix/hystrix-dashboard
 xdg-open http://localhost:7979/hystrix-dashboard
 ```
 
+# Task 00
+
+Configure the following URLs for the backend services in shop-service/src/main/resources/application.properties
+
+```
+catalog.service.url = http://api.swafel.com
+inventory.service.url = http://api.swafel.com
+```
+
+Build and deploy the shop-service
+
+```
+mvn clean package spring-boot:run
+```
+
+Open http://127.0.0.1:8080 and explore the shop :)
+
+Let the swafel.com admin scale the inventory service down
+
+```
+oc scale dc inventory --replicas=0
+```
+
+Play with the store, notice that item availability is broken, and so is the store catalog after three requests... 
+
+
+Try to find out what went wrong and fix the problem.
+
+
+# Task 01
+
+Enable hystrix timeouts in shop-service/src/main/resources/config.properties
+
+Notice the behavior of timeouts
+
+# Task 02
+
+Enable hystrix circuit breaker in shop-service/src/main/resources/config.properties
+
+Notice the behavior of the circuit breaker
+
+# Task 03
+
+Let the admin scale the inventory service up again, and let it simulate slowness (200ms delay in responses)...
+
+```
+oc scale dc inventory --replicas=0
+curl http://inventory.swafel.com/slow/200
+```
+
+Estimate max. rate of users' requests, considering 400ms calls and 10 hystrix command threads (200ms delay of the inventory service + about 200ms for network latency and a bit of a buffer)
+
 
