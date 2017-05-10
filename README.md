@@ -129,6 +129,26 @@ Redeploy, run a few requests, and try to find the spans on http://zipkin.swafel.
 Notice the two spans for catalog and inventory services are synchronous. Change InventoryService getItem return type to HystrixCommand and update ShopController, ServicesConfiguration to run the catalog and inventory queries in parallel.
 
 # Task 07
+
+Deploy your shop service to OpenShift, configure the deployment to use the (inventory/catalog) services from the "swafel" namespace
+
+(login to https://swafel.com:8443 as "student" and create your project first)
+
+```
+oc login https://swafel.com:8443   # student/student
+oc project <your-project-id>
+
+oc new-app --docker-image=registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:latest . --name=shop
+
+# make sure to be in the shop/ directory to deploy sources from current directory
+oc start-build shop --from-dir=.
+
+# use kubernetes services for service discovery (note the <service-name>.<namespace>.svc.cluster.local pattern)
+oc env dc shop ZIPKIN_SERVER_URL=http://zipkin.swafel.svc.cluster.local:9411 SERVER_PORT=8080 CATALOG_SERVICE_URL=http://catalog.swafel.svc.cluster.local INVENTORY_SERVICE_URL=http://inventory.swafel.svc.cluster.local
+oc expose service shop --port=8080
+```
+
+# Task 08
  
 Rewrite getItem to use reactive programming (Observable). Write an additional method, that will gather the list of items from the catalog service, and do an inventory request for each one, merging the responses
  as a list of ShopItems (with Observables)
@@ -137,4 +157,3 @@ Rewrite getItem to use reactive programming (Observable). Write an additional me
 @RequestMapping(method = RequestMethod.GET, value = "/items", produces = "application/json")
 public List<ShopItem> getItems()
 ```
-
