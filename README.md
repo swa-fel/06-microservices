@@ -100,7 +100,7 @@ Estimate max. rate of users' requests, considering 400ms calls and 10 hystrix co
 
 Run a load test with 25 user requests /s to http://127.0.0.1:8080/item/1
 
-Watch the hystrix console.
+Open the hystrix console ( http://127.0.0.1:9002/hystrix/ , and setup http://127.0.0.1:8080/hystrix.stream 
 
 Does the system behave according to our expectations?
 
