@@ -150,7 +150,7 @@ oc expose service shop --port=8080
 
 # Task 08
  
-Rewrite getItem to use reactive programming (Observable). Write an additional method, that will gather the list of items from the catalog service, and do an inventory request for each one, merging the responses
+Rewrite getItem to use [reactive programming](http://reactivex.io/) (Observable). Write an additional method, that will gather the list of items from the catalog service, and do an inventory request for each one, merging the responses
  as a list of ShopItems (with Observables)
 
 ```
