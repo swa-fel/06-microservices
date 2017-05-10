@@ -128,4 +128,8 @@ Redeploy, run a few requests, and try to find the spans on http://zipkin.swafel.
 
 Notice the two spans for catalog and inventory services are synchronous. Change InventoryService getItem return type to HystrixCommand and update ShopController, ServicesConfiguration to run the catalog and inventory queries in parallel.
 
+# Task 07
+
+Move the logic of the ShopController into the "api" service, so the client only needs to do one request.
+
 
