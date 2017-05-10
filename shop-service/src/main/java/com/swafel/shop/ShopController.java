@@ -37,6 +37,15 @@ public class ShopController {
 		return "inventory information not available at this time";
 	}
 
+	private ShopItem createShopItem(CatalogItem catalogItem, InventoryItem inventoryItem) {
+		ShopItem item = new ShopItem();
+		item.setId(catalogItem.getId());
+		item.setName(catalogItem.getName());
+		item.setPrice(catalogItem.getPrice());
+		item.setAvailability(getAvailability(inventoryItem));
+		return item;
+	}
+
 	@RequestMapping(method = RequestMethod.GET, value = "/catalog", produces = "application/json")
 	public List<CatalogItem> inventoryList() {
 		return catalogService.listItems();
@@ -45,19 +54,14 @@ public class ShopController {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/item/{id}", produces = "application/json")
 	public ResponseEntity<ShopItem> getItem(@PathVariable long id) throws ExecutionException, InterruptedException {
-		InventoryItem inventoryItem = inventoryService.getItem(id);
 		CatalogItem catalogItem = catalogService.getItem(id);
+		InventoryItem inventoryItem = inventoryService.getItem(id);
 
 		if (catalogItem == null) {
 			return ResponseEntity.status(503).build();
 		}
 
-		ShopItem shopItem = new ShopItem();
-		shopItem.setId(id);
-		shopItem.setName(catalogItem.getName());
-		shopItem.setPrice(catalogItem.getPrice());
-
-		shopItem.setAvailability(getAvailability(inventoryItem));
+		ShopItem shopItem = createShopItem(catalogItem, inventoryItem);
 
 		return ResponseEntity.ok(shopItem);
 	}
