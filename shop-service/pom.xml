@@ -98,6 +98,13 @@
 			<version>${version.zipkin.reporter}</version>
 		</dependency>
 
+		<!-- Rx Java -->
+		<dependency>
+			<groupId>io.reactivex</groupId>
+			<artifactId>rxjava</artifactId>
+			<version>1.1.5</version>
+		</dependency>
+
 		<!-- Test -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
