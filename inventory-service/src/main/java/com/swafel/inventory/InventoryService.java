@@ -1,6 +1,7 @@
 package com.swafel.inventory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -18,15 +19,8 @@ public class InventoryService {
 
 	private Map<Long, InventoryItem> items = new HashMap<>();
 
+	@Value("${slowness}")
 	private int slow = 0;
-
-	public int getSlow() {
-		return slow;
-	}
-
-	public void setSlow(int slow) {
-		this.slow = slow;
-	}
 
 	public InventoryService() {
 
