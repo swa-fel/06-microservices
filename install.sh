@@ -1,5 +1,7 @@
 #!/bin/sh
 
+oc new-project swafel
+
 oc new-app openzipkin/zipkin
 oc new-app mlabouardy/hystrix-dashboard:latest
 
