@@ -8,8 +8,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import brave.opentracing.BraveTracer;
 
@@ -53,6 +58,15 @@ public class ServicesConfiguration {
 			hostname = InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
 			// ignore
+		}
+
+		Path namespace = Paths.get("/var/run/secrets/kubernetes.io/serviceaccount/namespace");
+		if (namespace.toFile().isFile()) {
+			try {
+				hostname = new String(Files.readAllBytes(namespace), "UTF-8").trim() + ":" + hostname;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		brave.Tracer braveTracer = brave.Tracer.newBuilder().localServiceName(System.getProperty("user.name") + "@" + hostname).reporter(reporter).build();
