@@ -124,4 +124,8 @@ export ZIPKIN_SERVER_URL=http://zipkin.swafel.com
 
 Redeploy, run a few requests, and try to find the spans on http://zipkin.swafel.com
 
+# Task 06
+
+Notice the two spans for catalog and inventory services are synchronous. Change InventoryService getItem return type to HystrixCommand and update ShopController, ServicesConfiguration to run the catalog and inventory queries in parallel.
+
 
