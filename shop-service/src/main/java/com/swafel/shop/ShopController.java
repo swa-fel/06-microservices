@@ -11,8 +11,11 @@ import com.swafel.shop.model.CatalogItem;
 import com.swafel.shop.model.InventoryItem;
 import com.swafel.shop.model.ShopItem;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import rx.Observable;
 
 @RestController
 @RequestMapping("/")
@@ -39,26 +42,39 @@ public class ShopController {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/catalog", produces = "application/json")
 	public List<CatalogItem> inventoryList() {
-		return catalogService.listItems();
+		return catalogService.listItems().execute();
 	}
 
+	private ShopItem createShopItem(CatalogItem catalogItem, InventoryItem inventoryItem) {
+		ShopItem item = new ShopItem();
+		item.setId(catalogItem.getId());
+		item.setName(catalogItem.getName());
+		item.setPrice(catalogItem.getPrice());
+		item.setAvailability(getAvailability(inventoryItem));
+		return item;
+	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/item/{id}", produces = "application/json")
 	public ResponseEntity<ShopItem> getItem(@PathVariable long id) throws ExecutionException, InterruptedException {
-		InventoryItem inventoryItem = inventoryService.getItem(id);
-		CatalogItem catalogItem = catalogService.getItem(id);
+		final Observable<InventoryItem> inventoryItemObservable = inventoryService.getItem(id).toObservable();
+		final Observable<CatalogItem> catalogItemObservable = catalogService.getItem(id).toObservable();
+		final Observable<ShopItem> shopItemObservable = catalogItemObservable.zipWith(inventoryItemObservable, this::createShopItem);
 
-		if (catalogItem == null) {
-			return ResponseEntity.status(503).build();
-		}
+		return ResponseEntity.ok(shopItemObservable.toBlocking().first());
+	}
 
-		ShopItem shopItem = new ShopItem();
-		shopItem.setId(id);
-		shopItem.setName(catalogItem.getName());
-		shopItem.setPrice(catalogItem.getPrice());
+	@RequestMapping(method = RequestMethod.GET, value = "/items", produces = "application/json")
+	public List<ShopItem> getItems()
+	{
+		final Observable<List<CatalogItem>> catalogItemsObservable = catalogService.listItems().toObservable();
+		final Observable<CatalogItem> listObservable = catalogItemsObservable.flatMap(Observable::from);
+		final Observable<ShopItem> shopItemObservable = listObservable.flatMap(
+				catalogItem -> inventoryService.getItem(catalogItem.getId()).toObservable()
+						.map(inventoryItem -> createShopItem(catalogItem, inventoryItem)));
 
-		shopItem.setAvailability(getAvailability(inventoryItem));
+		List<ShopItem> ret = new LinkedList<>();
+		shopItemObservable.toBlocking().toIterable().forEach(ret::add);
 
-		return ResponseEntity.ok(shopItem);
+		return ret;
 	}
 }
