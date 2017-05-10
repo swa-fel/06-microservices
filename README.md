@@ -92,10 +92,36 @@ Notice the behavior of the circuit breaker
 Let the admin scale the inventory service up again, and let it simulate slowness (200ms delay in responses)...
 
 ```
-oc scale dc inventory --replicas=0
-curl http://inventory.swafel.com/slow/200
+oc env dc inventory SLOWNESS=200
+oc scale dc inventory --replicas=3
 ```
 
 Estimate max. rate of users' requests, considering 400ms calls and 10 hystrix command threads (200ms delay of the inventory service + about 200ms for network latency and a bit of a buffer)
+
+Run a load test with 25 user requests /s to http://127.0.0.1:8080/item/1
+
+Watch the hystrix console.
+
+Does the system behave according to our expectations?
+
+# Task 04
+
+Implement fallback for InventoryService
+
+```
+FallbackFactory<InventoryService> fallbackFactory = new FallbackFactory<InventoryService>() {
+  ...
+}
+```
+
+# Task 05
+
+Configure tracing to push spans to the zipkin server running on http://zipkin.swafel.com
+
+```
+export ZIPKIN_SERVER_URL=http://zipkin.swafel.com
+```
+
+Redeploy, run a few requests, and try to find the spans on http://zipkin.swafel.com
 
 
